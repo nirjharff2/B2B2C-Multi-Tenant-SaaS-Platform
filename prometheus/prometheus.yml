@@ -1,0 +1,27 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Prometheus monitoring itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # NOTE: replace 'api-gateway', 'user-service', 'order-service' below
+  # with the EXACT service names used in your docker-compose.yml.
+  # Docker Compose lets containers reach each other by service name,
+  # so this only works if Prometheus and your services are on the
+  # same compose network.
+
+  - job_name: 'api-gateway'
+    static_configs:
+      - targets: ['api-gateway:8000']
+
+  - job_name: 'user-service'
+    static_configs:
+      - targets: ['user-service:8001']
+
+  - job_name: 'order-service'
+    static_configs:
+      - targets: ['order-service:8002']

@@ -15,6 +15,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type Config struct {
@@ -42,7 +43,11 @@ func loadConfig() *Config {
 	}
 }
 
-// ReverseProxy forwards incoming HTTP requests to downstream microservices
+// ReverseProxy forwards incoming HTTP requests to downstream microservices.
+// The gateway mounts all routes under "/api/v1", but the downstream
+// services register their handlers without that prefix (e.g. "/orders",
+// "/users/{id}"), so it must be stripped before forwarding or every
+// proxied request 404s against the backend.
 func ReverseProxy(targetURL string) gin.HandlerFunc {
 	remote, err := url.Parse(targetURL)
 	if err != nil {
@@ -55,6 +60,14 @@ func ReverseProxy(targetURL string) gin.HandlerFunc {
 	proxy.Director = func(req *http.Request) {
 		originalDirector(req)
 		req.Host = remote.Host
+
+		if trimmed := strings.TrimPrefix(req.URL.Path, "/api/v1"); trimmed != req.URL.Path {
+			if trimmed == "" {
+				trimmed = "/"
+			}
+			req.URL.Path = trimmed
+			req.URL.RawPath = ""
+		}
 	}
 
 	return func(c *gin.Context) {
@@ -129,6 +142,9 @@ func main() {
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "API Gateway Healthy"})
 	})
+
+	// Prometheus scrape endpoint (see prometheus/prometheus.yml)
+	router.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
 	userProxy := ReverseProxy(cfg.UserServiceURL)
 	orderProxy := ReverseProxy(cfg.OrderServiceURL)

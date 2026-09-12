@@ -9,6 +9,8 @@ import (
 	"user-service/internal/handler"
 	"user-service/internal/repository"
 	"user-service/internal/services"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -23,6 +25,7 @@ func main() {
 	userHandler := handler.NewUserHandler(userService)
 
 	http.HandleFunc("/users/", userHandler.GetUser)
+	http.Handle("/metrics", promhttp.Handler())
 
 	fmt.Println("User Service 8001 পোর্টে চালু হচ্ছে...")
 	log.Fatal(http.ListenAndServe(":8001", nil))

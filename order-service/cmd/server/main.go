@@ -11,6 +11,8 @@ import (
 	"order-service/internal/messaging"
 	"order-service/internal/repository"
 	"order-service/internal/service"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -29,6 +31,7 @@ func main() {
 	orderHandler := handler.NewOrderHandler(orderService)
 
 	http.HandleFunc("/orders", orderHandler.CreateOrderHandler)
+	http.Handle("/metrics", promhttp.Handler())
 
 	fmt.Println("Order Service 8002 পোর্টে চালু হচ্ছে...")
 	log.Fatal(http.ListenAndServe(":8002", nil))

@@ -1,0 +1,22 @@
+# Compiled binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+/api-gateway/api-gateway
+/user-service/user-service
+/order-service/order-service
+/notification-service/notification-service
+
+# Go build/test artifacts
+*.test
+*.out
+
+# Environment files
+.env
+.env.*
+
+# IDE
+.vscode/
+.idea/

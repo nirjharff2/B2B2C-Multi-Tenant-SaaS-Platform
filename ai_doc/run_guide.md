@@ -72,9 +72,7 @@ curl http://localhost:8001/users/101
 
 **Create an order** (this calls `user-service` internally to validate the user, saves to `order-db`, and publishes an event to RabbitMQ):
 ```bash
-curl -X POST http://localhost:8002/orders \
-  -H "Content-Type: application/json" \
-  -d '{"user_id":"101","item":"Laptop","amount":999.99}'
+curl -X POST http://localhost:8002/orders -H "Content-Type: application/json" -d '{"user_id":"101","item":"Laptop","amount":999.99}'
 # {"order_id":"ORD-1006","customer_name":"Rahim","item":"Laptop","amount":999.99,"status":"CONFIRMED"}
 ```
 

@@ -24,7 +24,8 @@ func main() {
 	userService := services.NewUserService(userRepo, redisClient)
 	userHandler := handler.NewUserHandler(userService)
 
-	http.HandleFunc("/users/", userHandler.GetUser)
+	http.HandleFunc("GET /users", userHandler.GetUsers)
+	http.HandleFunc("GET /users/{id}", userHandler.GetUserByID)
 	http.Handle("/metrics", promhttp.Handler())
 
 	fmt.Println("User Service 8001 পোর্টে চালু হচ্ছে...")

@@ -35,9 +35,11 @@ func InitDB() *pgxpool.Pool {
 
 	seedQuery := `
 	INSERT INTO users (id, name, email) 
-	VALUES ('101', 'Rahim', 'rahim@example.com'), ('102', 'Karim', 'karim@example.com')
+	VALUES ('101', 'Rahim', 'rahim@example.com'), ('102', 'Karim', 'karim@example.com'), ('103', 'Babe', 'babe@example.com')
 	ON CONFLICT (id) DO NOTHING;`
-	dbPool.Exec(context.Background(), seedQuery)
+	if _, err = dbPool.Exec(context.Background(), seedQuery); err != nil {
+		log.Printf("Failed to seed users: %v\n", err)
+	}
 
 	fmt.Println("User Service: PostgreSQL Connected!")
 	return dbPool

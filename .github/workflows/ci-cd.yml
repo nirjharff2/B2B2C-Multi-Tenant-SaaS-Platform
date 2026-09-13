@@ -32,18 +32,11 @@ jobs:
         run: npm test
         env:
           API_GATEWAY_URL: http://localhost:8000
-          USER_SERVICE_URL: http://localhost:8001
-          ORDER_SERVICE_URL: http://localhost:8002
 
-      # --- NEW: optional smoke-test that your /metrics endpoints exist ---
-      # This isn't "running Prometheus in CI" (no point, the runner dies
-      # right after the job). It just confirms your instrumentation
-      # didn't break, using the same URLs as your tests above.
+      # --- Smoke-test endpoints accessible via the API Gateway ---
       - name: Check /metrics endpoints respond
         run: |
           curl -f http://localhost:8000/metrics
-          curl -f http://localhost:8001/metrics
-          curl -f http://localhost:8002/metrics
 
       - name: Check Container Status on Failure
         if: failure()

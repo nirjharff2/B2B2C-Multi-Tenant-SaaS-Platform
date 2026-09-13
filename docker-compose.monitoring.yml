@@ -3,9 +3,15 @@
 #   docker compose -f docker-compose.yml -f docker-compose.monitoring.yml up -d --build
 #
 # Passing both files together makes Compose merge them into ONE project,
-# so prometheus/grafana land on the same default network as your
-# api-gateway / user-service / order-service containers and can reach
-# them by service name.
+# so the networks declared in docker-compose.yml can be referenced here.
+#
+#   prometheus -> internal-net   scrapes api-gateway / user-service / order-service by name
+#   prometheus -> monitoring-net publishes :9090 (ports aren't published from internal-only networks)
+#   grafana    -> monitoring-net reaches prometheus, publishes :3000; no access to app services
+
+networks:
+  monitoring-net:
+    driver: bridge
 
 services:
   prometheus:
@@ -13,6 +19,9 @@ services:
     container_name: prometheus
     ports:
       - "9090:9090"
+    networks:
+      - internal-net
+      - monitoring-net
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     command:
@@ -24,6 +33,8 @@ services:
     container_name: grafana
     ports:
       - "3000:3000"
+    networks:
+      - monitoring-net
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin

@@ -1,3 +1,26 @@
+# Network topology (see ai_doc/network_issues.md and ai_doc/fixed_network.md)
+#
+#   public-net   (bridge)          api-gateway                      -> host :8000
+#   internal-net (internal: true)  api-gateway, user/order/notification-service
+#   db-net       (internal: true)  user/order/notification-service, user-db, order-db, redis, rabbitmq
+#   mgmt-net     (bridge)          rabbitmq only                    -> host :15672
+#
+# Docker does not publish ports for a container attached only to internal
+# networks, so rabbitmq needs mgmt-net to expose its management UI. No other
+# container joins mgmt-net, so it adds no container-to-container path.
+
+networks:
+  public-net:
+    driver: bridge
+  internal-net:
+    driver: bridge
+    internal: true
+  db-net:
+    driver: bridge
+    internal: true
+  mgmt-net:
+    driver: bridge
+
 services:
   user-db:
     image: postgres:16-alpine
@@ -5,8 +28,8 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: secret
       POSTGRES_DB: userdb
-    ports:
-      - "5432:5432"
+    networks:
+      - db-net
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d userdb"]
       interval: 3s
@@ -19,8 +42,8 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: secret
       POSTGRES_DB: orderdb
-    ports:
-      - "5433:5432"
+    networks:
+      - db-net
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d orderdb"]
       interval: 3s
@@ -29,14 +52,19 @@ services:
 
   redis:
     image: redis:alpine
-    ports:
-      - "6379:6379"
+    networks:
+      - db-net
 
   rabbitmq:
     image: rabbitmq:3.13-management
+    environment:
+      RABBITMQ_ERLANG_COOKIE: "my-super-secret-rabbit-cookie-123456"
     ports:
       - "5672:5672"
       - "15672:15672"
+    networks:
+      - db-net
+      - mgmt-net
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "check_port_connectivity"]
       interval: 5s
@@ -45,8 +73,9 @@ services:
 
   user-service:
     build: ./user-service
-    ports:
-      - "8001:8001"
+    networks:
+      - internal-net
+      - db-net
     depends_on:
       user-db:
         condition: service_healthy
@@ -57,8 +86,9 @@ services:
 
   order-service:
     build: ./order-service
-    ports:
-      - "8002:8002"
+    networks:
+      - internal-net
+      - db-net
     depends_on:
       order-db:
         condition: service_healthy
@@ -69,15 +99,21 @@ services:
 
   notification-service:
     build: ./notification-service
+    networks:
+      - internal-net
+      - db-net
     depends_on:
       rabbitmq:
         condition: service_healthy
-        
+
   api-gateway:
     build: ./api-gateway
     container_name: api-gateway
     ports:
       - "8000:8000"
+    networks:
+      - public-net
+      - internal-net
     environment:
       - PORT=8000
       - JWT_SECRET=super-secret-key

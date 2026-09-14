@@ -13,6 +13,10 @@ networks:
   monitoring-net:
     driver: bridge
 
+  internal-net:
+    external: true
+    name: go-microservices_internal-net
+
 services:
   prometheus:
     image: prom/prometheus:latest

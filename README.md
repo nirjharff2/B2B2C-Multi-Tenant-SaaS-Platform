@@ -18,6 +18,17 @@ The project consists of three independent microservices interacting via REST end
 
 ---
 
+
+   ## Branching & Deployment
+
+   Feature branches → PR → `main` → auto-deploys to production.
+
+   - All work happens on a feature branch, never directly on `main`.
+   - Open a PR into `main`; it requires 1 approval and passing checks to merge.
+   - Merging to `main` triggers deployment (see `.github/workflows/` once configured).
+
+   - 
+
 ## 🛠 Prerequisites
 
 Make sure you have the following installed on your machine:
